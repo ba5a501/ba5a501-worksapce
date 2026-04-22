@@ -4,23 +4,15 @@
     <title>Bekheit's Hub</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
-        /* CSS: Making it look futuristic */
         body { background: #050505; color: #00d4ff; font-family: 'Courier New', Courier, monospace; text-align: center; padding: 20px; }
-        
         .nav-container { margin-bottom: 40px; border-bottom: 1px solid #222; padding-bottom: 20px; }
-        
-        select { 
-            padding: 10px; background: #111; color: #00d4ff; border: 1px solid #00d4ff; 
-            border-radius: 5px; font-size: 1.1em; width: 80%; max-width: 300px;
-        }
-
+        select { padding: 10px; background: #111; color: #00d4ff; border: 1px solid #00d4ff; border-radius: 5px; font-size: 1.1em; width: 80%; max-width: 300px; }
         .project-box { display: none; padding: 20px; border: 1px dashed #333; border-radius: 10px; }
         .active { display: block; }
-
-        input { padding: 12px; width: 80%; margin: 20px 0; border-radius: 5px; border: 1px solid #444; background: #000; color: white; }
-        button { padding: 15px 30px; background: #00d4ff; color: black; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; }
+        input[type="text"] { padding: 12px; width: 80%; margin: 20px 0; border-radius: 5px; border: 1px solid #444; background: #000; color: white; }
+        input[type="range"] { width: 80%; margin: 15px 0; accent-color: #00d4ff; }
+        button { padding: 15px 30px; background: #00d4ff; color: black; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; margin-bottom: 10px; }
         button:hover { background: #008fb3; }
-        
         .status { margin-top: 20px; font-size: 0.8em; color: #555; }
     </style>
 </head>
@@ -28,7 +20,7 @@
 
     <div class="nav-container">
         <h1>PROJECT HUB</h1>
-        <label for="projectSelect">SELECT PROJECT:</label><br><br>
+        <label>SELECT PROJECT:</label><br><br>
         <select id="projectSelect" onchange="switchProject()">
             <option value="astro">Astro-Control</option>
             <option value="switch">Switch</option>
@@ -37,85 +29,58 @@
 
     <div id="astroProject" class="project-box active">
         <h2>🚀 ASTRO CONTROL</h2>
-        <p>Control the Blue OLED Starfield</p>
         <input type="text" id="messageInput" placeholder="Enter message...">
         <br>
-        <button onclick="connectAndSend()">SEND TO ESP32</button>
+        <button onclick="connectAndSend()">CONNECT & SEND</button>
         <div class="status" id="status">Status: Ready</div>
-        <div style="margin-top:20px; border-top: 1px solid #222; padding-top:20px;">
-    <h3>REAL-TIME SLIDERS</h3>
-    
-    <label>RED (Value A):</label><br>
-    <input type="range" min="0" max="255" value="0" oninput="sendSlider(0, this.value)"><br>
-    
-    <label>GREEN (Value B):</label><br>
-    <input type="range" min="0" max="255" value="0" oninput="sendSlider(1, this.value)"><br>
-    
-    <label>BLUE (Value C):</label><br>
-    <input type="range" min="0" max="255" value="0" oninput="sendSlider(2, this.value)">
-</div>
-
-<script>
-// New function for real-time sliders
-async function sendSlider(id, val) {
-    if (!device || !device.gatt.connected) return; // Only send if connected
-    
-    try {
-        const service = await server.getPrimaryService(SERVICE_UUID);
-        const characteristic = await service.getCharacteristic(CHARACTERISTIC_UUID);
         
-        // Format: "S[ID]:[VALUE]" e.g., "S0:155"
-        const data = "S" + id + ":" + val;
-        const encoder = new TextEncoder();
-        await characteristic.writeValue(encoder.encode(data));
-    } catch (e) { console.log(e); }
-}
-</script>
+        <div style="margin-top:20px; border-top: 1px solid #222; padding-top:20px;">
+            <h3>COSMETIC SLIDERS</h3>
+            <label>Slider 1</label><br>
+            <input type="range" min="0" max="255" value="0" oninput="sendSlider(0, this.value)"><br>
+            <label>Slider 2</label><br>
+            <input type="range" min="0" max="255" value="0" oninput="sendSlider(1, this.value)"><br>
+            <label>Slider 3</label><br>
+            <input type="range" min="0" max="255" value="0" oninput="sendSlider(2, this.value)">
+        </div>
     </div>
 
     <div id="switchProject" class="project-box">
         <h2>🔌 REMOTE SWITCH</h2>
-        <p>This project is under construction...</p>
+        <p>Under Construction...</p>
         <div style="font-size: 3em;">🚧</div>
     </div>
 
     <script>
-        // Project Switcher Logic
-        function switchProject() {
-            const selection = document.getElementById('projectSelect').value;
-            document.getElementById('astroProject').classList.remove('active');
-            document.getElementById('switchProject').classList.remove('active');
-
-            if(selection === 'astro') {
-                document.getElementById('astroProject').classList.add('active');
-            } else {
-                document.getElementById('switchProject').classList.add('active');
-            }
-        }
-
-        // Bluetooth Logic (Same as before)
+        // GLOBAL BLUETOOTH VARIABLES
+        let device, server;
         const SERVICE_UUID = "4fafc201-1fb5-459e-8fcc-c5c9c331914b";
         const CHARACTERISTIC_UUID = "beb5483e-36e1-4688-b7f5-ea07361b26a8";
 
+        function switchProject() {
+            const selection = document.getElementById('projectSelect').value;
+            document.getElementById('astroProject').classList.toggle('active', selection === 'astro');
+            document.getElementById('switchProject').classList.toggle('active', selection === 'switch');
+        }
+
         async function connectAndSend() {
-            const msg = document.getElementById('messageInput').value;
             const statusDiv = document.getElementById('status');
+            const msg = document.getElementById('messageInput').value;
             try {
                 statusDiv.innerText = "Scanning...";
-                const device = await navigator.bluetooth.requestDevice({
+                device = await navigator.bluetooth.requestDevice({
                     filters: [{ name: 'ESP32_BLE' }],
                     optionalServices: [SERVICE_UUID]
                 });
-                const server = await device.gatt.connect();
+                server = await device.gatt.connect();
                 const service = await server.getPrimaryService(SERVICE_UUID);
-                const characteristic = await service.getCharacteristic(CHARACTERISTIC_UUID);
-                const encoder = new TextEncoder();
-                await characteristic.writeValue(encoder.encode(msg));
-                statusDiv.innerText = "Sent Successfully!";
-            } catch (error) {
-                statusDiv.innerText = "Error: " + error;
-            }
+                const char = await service.getCharacteristic(CHARACTERISTIC_UUID);
+                await char.writeValue(new TextEncoder().encode(msg));
+                statusDiv.innerText = "Connected!";
+            } catch (e) { statusDiv.innerText = "Error: " + e; }
         }
-    </script>
-</body>
-</html>
+
+        async function sendSlider(id, val) {
+            if (!server || !server.connected) return;
+            try {
+                const service = await server.getPrimaryService(SERVICE_UUID);
