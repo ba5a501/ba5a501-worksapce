@@ -68,7 +68,7 @@
             try {
                 statusDiv.innerText = "Searching...";
                 device = await navigator.bluetooth.requestDevice({
-                    filters: [{ name: 'ESP32_BLE' }],
+                    filters: [{ name: 'ESP32_HUB' }],
                     optionalServices: [SERVICE_UUID]
                 });
                 server = await device.gatt.connect();
