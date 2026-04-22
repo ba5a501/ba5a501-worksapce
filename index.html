@@ -42,6 +42,35 @@
         <br>
         <button onclick="connectAndSend()">SEND TO ESP32</button>
         <div class="status" id="status">Status: Ready</div>
+        <div style="margin-top:20px; border-top: 1px solid #222; padding-top:20px;">
+    <h3>REAL-TIME SLIDERS</h3>
+    
+    <label>RED (Value A):</label><br>
+    <input type="range" min="0" max="255" value="0" oninput="sendSlider(0, this.value)"><br>
+    
+    <label>GREEN (Value B):</label><br>
+    <input type="range" min="0" max="255" value="0" oninput="sendSlider(1, this.value)"><br>
+    
+    <label>BLUE (Value C):</label><br>
+    <input type="range" min="0" max="255" value="0" oninput="sendSlider(2, this.value)">
+</div>
+
+<script>
+// New function for real-time sliders
+async function sendSlider(id, val) {
+    if (!device || !device.gatt.connected) return; // Only send if connected
+    
+    try {
+        const service = await server.getPrimaryService(SERVICE_UUID);
+        const characteristic = await service.getCharacteristic(CHARACTERISTIC_UUID);
+        
+        // Format: "S[ID]:[VALUE]" e.g., "S0:155"
+        const data = "S" + id + ":" + val;
+        const encoder = new TextEncoder();
+        await characteristic.writeValue(encoder.encode(data));
+    } catch (e) { console.log(e); }
+}
+</script>
     </div>
 
     <div id="switchProject" class="project-box">
@@ -74,7 +103,7 @@
             try {
                 statusDiv.innerText = "Scanning...";
                 const device = await navigator.bluetooth.requestDevice({
-                    filters: [{ name: 'ESP32_Anas_BLE' }],
+                    filters: [{ name: 'ESP32_BLE' }],
                     optionalServices: [SERVICE_UUID]
                 });
                 const server = await device.gatt.connect();
