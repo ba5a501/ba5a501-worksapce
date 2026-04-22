@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Astro-Control</title>
+    <style>
+        body { background: #000; color: #00d4ff; font-family: sans-serif; text-align: center; padding: 50px; }
+        input { padding: 10px; width: 80%; margin-bottom: 20px; border-radius: 5px; border: 1px solid #00d4ff; background: #111; color: white; }
+        button { padding: 15px 30px; background: #00d4ff; color: black; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; }
+        .status { margin-top: 20px; font-size: 0.8em; color: #555; }
+    </style>
+</head>
+<body>
+    <h1>ASTRO CONTROL</h1>
+    <input type="text" id="messageInput" placeholder="Type message here...">
+    <br>
+    <button onclick="connectAndSend()">SEND TO OLED</button>
+    <div class="status" id="status">Status: Waiting for Bluefy...</div>
+
+    <script>
+        // Use the same UUIDs from your ESP32 BLE code
+        const SERVICE_UUID = "4fafc201-1fb5-459e-8fcc-c5c9c331914b";
+        const CHARACTERISTIC_UUID = "beb5483e-36e1-4688-b7f5-ea07361b26a8";
+
+        async function connectAndSend() {
+            const msg = document.getElementById('messageInput').value;
+            const statusDiv = document.getElementById('status');
+
+            try {
+                statusDiv.innerText = "Scanning for ESP32_Anas_BLE...";
+                const device = await navigator.bluetooth.requestDevice({
+                    filters: [{ name: 'ESP32_Anas_BLE' }],
+                    optionalServices: [SERVICE_UUID]
+                });
+
+                statusDiv.innerText = "Connecting...";
+                const server = await device.gatt.connect();
+                const service = await server.getPrimaryService(SERVICE_UUID);
+                const characteristic = await service.getCharacteristic(CHARACTERISTIC_UUID);
+
+                statusDiv.innerText = "Sending Data...";
+                const encoder = new TextEncoder();
+                await characteristic.writeValue(encoder.encode(msg));
+
+                statusDiv.innerText = "Message Sent! Pulsating on OLED.";
+            } catch (error) {
+                statusDiv.innerText = "Error: " + error;
+                console.error(error);
+            }
+        }
+    </script>
+</body>
+</html>
