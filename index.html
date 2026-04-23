@@ -66,10 +66,11 @@
         async function initBluetooth() {
             const statusDiv = document.getElementById('status');
             try {
-                statusDiv.innerText = "Searching...";
+                statusDiv.innerText = "Scanning for all devices...";
+                // This 'acceptAllDevices' bypasses the name filter
                 device = await navigator.bluetooth.requestDevice({
-                    filters: [{ name: 'ESP32_HUB' }],
-                    optionalServices: [SERVICE_UUID]
+                acceptAllDevices: true, 
+                optionalServices: [SERVICE_UUID]
                 });
                 server = await device.gatt.connect();
                 const service = await server.getPrimaryService(SERVICE_UUID);
