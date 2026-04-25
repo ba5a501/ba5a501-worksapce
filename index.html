@@ -1,100 +1,167 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Bekheit's Hub</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ESP32_HUB Controller</title>
     <style>
-        body { background: #050505; color: #00d4ff; font-family: 'Courier New', Courier, monospace; text-align: center; padding: 20px; }
-        .nav-container { margin-bottom: 30px; border-bottom: 1px solid #222; padding-bottom: 20px; }
-        select { padding: 10px; background: #111; color: #00d4ff; border: 1px solid #00d4ff; border-radius: 5px; width: 80%; max-width: 300px; }
-        .project-box { display: none; padding: 20px; border: 1px dashed #333; border-radius: 10px; }
-        .active { display: block; }
-        input[type="text"] { padding: 12px; width: 80%; margin: 10px 0; border-radius: 5px; border: 1px solid #444; background: #000; color: white; }
-        input[type="range"] { width: 80%; margin: 15px 0; accent-color: #00d4ff; }
-        .btn-connect { padding: 15px 30px; background: #ff0055; color: white; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; margin-bottom: 20px; width: 80%; }
-        .btn-send { padding: 10px 20px; background: #00d4ff; color: black; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; }
-        .status { margin-top: 15px; font-size: 0.9em; color: #555; }
+        body {
+            font-family: -apple-system, sans-serif;
+            background-color: #0a0a0a;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        .card {
+            background: #1a1a1a;
+            padding: 25px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            width: 100%;
+            max-width: 400px;
+        }
+        h2 { color: #00ff88; margin-top: 0; text-align: center; }
+        .status {
+            text-align: center;
+            margin-bottom: 20px;
+            font-weight: bold;
+            color: #ff4444;
+        }
+        .btn {
+            background: #00ff88;
+            color: black;
+            border: none;
+            padding: 15px;
+            width: 100%;
+            border-radius: 10px;
+            font-weight: bold;
+            font-size: 16px;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+        .control-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-size: 14px; color: #aaa; }
+        input[type="range"] {
+            width: 100%;
+            height: 10px;
+            border-radius: 5px;
+            background: #333;
+            outline: none;
+            -webkit-appearance: none;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 25px;
+            height: 25px;
+            background: #00ff88;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            box-sizing: border-box;
+            background: #333;
+            border: 1px solid #444;
+            color: white;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
 
-    <div class="nav-container">
-        <h1>PROJECT HUB</h1>
-        <button class="btn-connect" onclick="initBluetooth()">1. CONNECT TO ESP32</button>
-        <div class="status" id="status">Status: Disconnected</div>
-        <br>
-        <label>SELECT PROJECT:</label><br>
-        <select id="projectSelect" onchange="switchProject()">
-            <option value="astro">Astro-Control</option>
-            <option value="switch">Switch</option>
-        </select>
-    </div>
+    <div class="card">
+        <h2>ESP32_HUB</h2>
+        <div id="status" class="status">Disconnected</div>
+        <button class="btn" onclick="initBluetooth()">CONNECT TO HUB</button>
 
-    <div id="astroProject" class="project-box active">
-        <h2>🚀 ASTRO CONTROL</h2>
-        <input type="text" id="messageInput" placeholder="Type text here...">
-        <button class="btn-send" onclick="sendText()">SEND TEXT</button>
-        
-        <div style="margin-top:20px; border-top: 1px solid #222; padding-top:20px;">
-            <h3>COSMETIC SLIDERS</h3>
-            <label>Slider 1</label><br>
-            <input type="range" min="0" max="255" value="0" oninput="sendSlider(0, this.value)"><br>
-            <label>Slider 2</label><br>
-            <input type="range" min="0" max="255" value="0" oninput="sendSlider(1, this.value)"><br>
-            <label>Slider 3</label><br>
-            <input type="range" min="0" max="255" value="0" oninput="sendSlider(2, this.value)">
+        <div class="control-group">
+            <label>Continuous 1 (P15)</label>
+            <input type="range" min="0" max="255" value="127" oninput="sendSlider(0, this.value)">
+        </div>
+
+        <div class="control-group">
+            <label>Continuous 2 (P2)</label>
+            <input type="range" min="0" max="255" value="127" oninput="sendSlider(1, this.value)">
+        </div>
+
+        <div class="control-group">
+            <label>Continuous 3 (P0)</label>
+            <input type="range" min="0" max="255" value="127" oninput="sendSlider(2, this.value)">
+        </div>
+
+        <div class="control-group">
+            <label>Standard Servo (P4)</label>
+            <input type="range" min="0" max="255" value="0" oninput="sendSlider(3, this.value)">
+        </div>
+
+        <div class="control-group">
+            <label>OLED Message</label>
+            <input type="text" id="msgInput" placeholder="Type message..." onchange="sendText(this.value)">
         </div>
     </div>
 
-    <div id="switchProject" class="project-box">
-        <h2>🔌 REMOTE SWITCH</h2>
-        <div style="font-size: 3em; margin-top: 20px;">🚧</div>
-        <p>Empty for now.</p>
-    </div>
-
     <script>
-        let device, server, characteristic;
         const SERVICE_UUID = "4fafc201-1fb5-459e-8fcc-c5c9c331914b";
         const CHARACTERISTIC_UUID = "beb5483e-36e1-4688-b7f5-ea07361b26a8";
 
-        function switchProject() {
-            const selection = document.getElementById('projectSelect').value;
-            document.getElementById('astroProject').className = (selection === 'astro') ? 'project-box active' : 'project-box';
-            document.getElementById('switchProject').className = (selection === 'switch') ? 'project-box active' : 'project-box';
-        }
+        let device, server, characteristic;
+        let isSending = false; // Throttling flag
 
         async function initBluetooth() {
             const statusDiv = document.getElementById('status');
             try {
-                statusDiv.innerText = "Scanning for all devices...";
-                // This 'acceptAllDevices' bypasses the name filter
+                statusDiv.innerText = "Searching...";
                 device = await navigator.bluetooth.requestDevice({
-                acceptAllDevices: true, 
-                optionalServices: [SERVICE_UUID]
+                    filters: [{ name: 'ESP32_HUB' }],
+                    optionalServices: [SERVICE_UUID]
                 });
+
+                statusDiv.innerText = "Connecting...";
                 server = await device.gatt.connect();
                 const service = await server.getPrimaryService(SERVICE_UUID);
                 characteristic = await service.getCharacteristic(CHARACTERISTIC_UUID);
-                statusDiv.innerText = "Connected! ✅";
+
+                statusDiv.innerText = "Connected ✅";
                 statusDiv.style.color = "#00ff88";
+
+                device.addEventListener('gattserverdisconnected', () => {
+                    statusDiv.innerText = "Disconnected";
+                    statusDiv.style.color = "#ff4444";
+                });
+
             } catch (e) {
-                statusDiv.innerText = "Error: " + e;
                 console.log(e);
+                statusDiv.innerText = "Error: " + e.message;
             }
         }
 
-        async function sendText() {
-            if (!characteristic) return;
-            const msg = document.getElementById('messageInput').value;
-            await characteristic.writeValue(new TextEncoder().encode(msg));
-        }
-
+        // Throttled function for high-frequency slider movement
         async function sendSlider(id, val) {
-            if (!characteristic) return;
+            if (!characteristic || isSending) return;
+
+            isSending = true;
             try {
                 const data = "S" + id + ":" + val;
                 await characteristic.writeValue(new TextEncoder().encode(data));
-            } catch (e) { console.log(e); }
+                
+                // 50ms throttle prevents the Bluetooth stack from crashing
+                setTimeout(() => { isSending = false; }, 50); 
+            } catch (e) {
+                isSending = false;
+            }
+        }
+
+        async function sendText(msg) {
+            if (!characteristic) return;
+            try {
+                await characteristic.writeValue(new TextEncoder().encode(msg));
+            } catch (e) {
+                console.log(e);
+            }
         }
     </script>
 </body>
